@@ -1,7 +1,12 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.schemas import TravelImageAnalysis
+from app.schemas import TravelImageAnalysis, VoiceTranslationResult
+from app.services.media_service import (
+    AudioTooLargeError,
+    UnsupportedAudioTypeError,
+    validate_audio,
+)
 
 
 client = TestClient(app)
@@ -113,3 +118,74 @@ def test_tts_marks_synthetic_audio(monkeypatch) -> None:
     response = client.post("/api/media/tts", json={"text": "안녕하세요.", "voice": "coral"})
     assert response.status_code == 200
     assert response.headers["x-synthetic-voice"] == "true"
+
+
+def test_voice_translation_returns_text_and_audio(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "app.routers.media_router.translate_voice",
+        lambda *_: VoiceTranslationResult(
+            transcript="안녕하세요.",
+            translation="Hello.",
+            audio_base64="bXAz",
+        ),
+    )
+    response = client.post(
+        "/api/media/voice-translation",
+        files={"audio": ("recording.wav", b"RIFFfakeWAVE", "audio/wav")},
+        data={"source_language": "ko", "target_language": "en", "voice": "coral"},
+    )
+    assert response.status_code == 200
+    assert response.json()["transcript"] == "안녕하세요."
+    assert response.json()["translation"] == "Hello."
+    assert response.json()["synthetic_voice"] is True
+
+
+def test_voice_translation_rejects_unsupported_language() -> None:
+    response = client.post(
+        "/api/media/voice-translation",
+        files={"audio": ("recording.wav", b"RIFFfakeWAVE", "audio/wav")},
+        data={"source_language": "en", "target_language": "ko"},
+    )
+    assert response.status_code == 422
+
+
+def test_voice_translation_maps_unsupported_media_type(monkeypatch) -> None:
+    def reject(*_):
+        raise UnsupportedAudioTypeError("지원하지 않는 형식")
+
+    monkeypatch.setattr("app.routers.media_router.translate_voice", reject)
+    response = client.post(
+        "/api/media/voice-translation",
+        files={"audio": ("recording.txt", b"text", "text/plain")},
+    )
+    assert response.status_code == 415
+
+
+def test_voice_translation_maps_too_large(monkeypatch) -> None:
+    def reject(*_):
+        raise AudioTooLargeError("너무 큰 파일")
+
+    monkeypatch.setattr("app.routers.media_router.translate_voice", reject)
+    response = client.post(
+        "/api/media/voice-translation",
+        files={"audio": ("recording.wav", b"RIFFfakeWAVE", "audio/wav")},
+    )
+    assert response.status_code == 413
+
+
+def test_validate_audio_accepts_wav_header() -> None:
+    validate_audio("audio/wav", b"RIFF\x00\x00\x00\x00WAVEdata")
+
+
+def test_validate_audio_rejects_mismatched_signature() -> None:
+    try:
+        validate_audio("audio/wav", b"not-a-wave")
+    except UnsupportedAudioTypeError:
+        return
+    raise AssertionError("파일 시그니처 불일치를 거부해야 합니다.")
+
+
+def test_video_app_is_served() -> None:
+    response = client.get("/video/")
+    assert response.status_code == 200
+    assert "영상 속 한 장면" in response.text

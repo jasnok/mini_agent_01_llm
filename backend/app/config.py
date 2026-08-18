@@ -17,7 +17,9 @@ class Settings:
     openai_vision_model: str = os.getenv("OPENAI_VISION_MODEL", "gpt-4.1-mini")
     openai_tts_model: str = os.getenv("OPENAI_TTS_MODEL", "gpt-4o-mini-tts")
     openai_tts_voice: str = os.getenv("OPENAI_TTS_VOICE", "coral")
+    openai_stt_model: str = os.getenv("OPENAI_STT_MODEL", "gpt-4o-mini-transcribe")
     max_image_size_mb: int = int(os.getenv("MAX_IMAGE_SIZE_MB", "5"))
+    max_audio_size_mb: int = int(os.getenv("MAX_AUDIO_SIZE_MB", "10"))
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
     gemini_model: str = os.getenv("GEMINI_MODEL", "")
     ollama_base_url: str = os.getenv(
@@ -26,6 +28,9 @@ class Settings:
     ollama_model: str = os.getenv("OLLAMA_MODEL", "llama3.2")
     request_timeout_seconds: float = float(
         os.getenv("REQUEST_TIMEOUT_SECONDS", "60")
+    )
+    voice_request_timeout_seconds: float = float(
+        os.getenv("VOICE_REQUEST_TIMEOUT_SECONDS", "90")
     )
 
 
