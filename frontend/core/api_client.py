@@ -7,7 +7,7 @@ from typing import Any
 import httpx
 
 
-BACKEND_URL = os.getenv("BACKEND_API_URL", "https://mini-agent-01-llm-k714.onrender.com").rstrip("/")
+BACKEND_URL = os.getenv("BACKEND_API_URL", "https://mini-agent-01-llm-6cqz.onrender.com").rstrip("/")
 REQUEST_TIMEOUT = 70.0
 
 
