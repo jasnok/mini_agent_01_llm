@@ -11,9 +11,11 @@ llm_page = st.Page("app_pages/05_llm.py", title="LLM 호출")
 compare_page = st.Page("app_pages/06_provider_compare.py", title="Provider 비교")
 image_page = st.Page("app_pages/07_image_analysis.py", title="이미지 분석")
 tts_page = st.Page("app_pages/08_tts.py", title="음성 생성")
+voice_translation_page = st.Page("app_pages/09_voice_translation.py", title="음성 영어 번역")
+video_guide_page = st.Page("app_pages/10_video_guide.py", title="영상 분석 음성 안내")
 
 navigation = st.navigation(
-    [home_page, concept_page, travel_page, environment_page, llm_page, compare_page, image_page, tts_page],
+    [home_page, concept_page, travel_page, environment_page, llm_page, compare_page, image_page, tts_page, voice_translation_page, video_guide_page],
     position="hidden",
 )
 
@@ -30,6 +32,8 @@ with st.sidebar:
         st.page_link(compare_page, label="1-4. Provider 비교")
         st.page_link(image_page, label="1-5. 이미지 분석")
         st.page_link(tts_page, label="1-6. 음성 생성")
+        st.page_link(voice_translation_page, label="1-7. 음성 영어 번역")
+        st.page_link(video_guide_page, label="1-8. 영상 분석 음성 안내")
 
     st.divider()
     st.caption("실행 환경")

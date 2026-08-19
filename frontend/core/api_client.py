@@ -1,5 +1,6 @@
 """모든 Agent 메뉴에서 공통으로 사용하는 HTTP 요청 기능."""
 
+import base64
 import os
 from typing import Any
 
@@ -77,5 +78,40 @@ def request_audio(text: str, voice: str, instructions: str) -> bytes:
         except ValueError:
             detail = str(error)
         raise BackendAPIError(detail) from error
+    except httpx.RequestError as error:
+        raise BackendAPIError("백엔드 서버에 연결할 수 없습니다.") from error
+
+
+def upload_voice_translation(
+    filename: str,
+    content: bytes,
+    content_type: str,
+    voice: str,
+) -> dict[str, Any]:
+    try:
+        response = httpx.post(
+            f"{BACKEND_URL}/api/media/voice-translation",
+            files={"audio": (filename, content, content_type)},
+            data={
+                "source_language": "ko",
+                "target_language": "en",
+                "voice": voice,
+            },
+            timeout=90.0,
+        )
+        response.raise_for_status()
+        result = response.json()
+        result["audio"] = base64.b64decode(result.pop("audio_base64"), validate=True)
+        return result
+    except (ValueError, KeyError) as error:
+        raise BackendAPIError("백엔드가 올바른 음성 번역 결과를 반환하지 않았습니다.") from error
+    except httpx.HTTPStatusError as error:
+        try:
+            detail = error.response.json().get("detail", str(error))
+        except ValueError:
+            detail = str(error)
+        raise BackendAPIError(detail) from error
+    except httpx.TimeoutException as error:
+        raise BackendAPIError("음성 번역 응답 시간이 초과되었습니다.") from error
     except httpx.RequestError as error:
         raise BackendAPIError("백엔드 서버에 연결할 수 없습니다.") from error

@@ -93,3 +93,13 @@ class TtsRequest(BaseModel):
         default="한국어로 또렷하고 따뜻한 여행 가이드처럼 말하세요.",
         max_length=500,
     )
+
+
+class VoiceTranslationResult(BaseModel):
+    transcript: str = Field(min_length=1, max_length=4000)
+    translation: str = Field(min_length=1, max_length=4000)
+    source_language: Literal["ko"] = "ko"
+    target_language: Literal["en"] = "en"
+    audio_base64: str = Field(min_length=1)
+    audio_mime_type: Literal["audio/mpeg"] = "audio/mpeg"
+    synthetic_voice: bool = True
